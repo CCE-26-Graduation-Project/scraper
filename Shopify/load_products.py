@@ -118,15 +118,17 @@ def insert_products_to_db(json_file_path):
                         f"Modal embedding call failed ({consecutive_modal_failures}/{MAX_CONSECUTIVE_MODAL_FAILURES}): {modal_error}"
                     )
 
-                embedding = average_embeddings(image_embedding, text_embedding)
+                # embedding = average_embeddings(image_embedding, text_embedding)
 
-                print(len(embedding))
+                print(len(image_embedding))
+                print(len(text_embedding))
+
 
                 cur.execute(
                     """
                     INSERT INTO public.products 
-                    (name, price, vendor, category, product_url, image_url, embedding)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (name, price, vendor, category, product_url, image_url, img_emb, txt_emb)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         title,
@@ -135,7 +137,8 @@ def insert_products_to_db(json_file_path):
                         'Clothes',
                         product.get('url'),
                         product.get('images', [''])[0],  # First image
-                        embedding  # Use the actual embedding
+                        image_embedding,  # Use the actual image embedding
+                        text_embedding   # Use the actual text embedding
                     )
                 )
                 conn.commit()
