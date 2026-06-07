@@ -1,6 +1,7 @@
 import psycopg2
 import json
 import os
+import hashlib
 from pathlib import Path
 from dotenv import load_dotenv
 import modal
@@ -14,6 +15,24 @@ USER = os.getenv("USER")
 PASSWORD = os.getenv("PASSWORD")
 CHECKPOINT_FILE = Path(".load_products_checkpoint.json")
 MAX_CONSECUTIVE_MODAL_FAILURES = int(os.getenv("MAX_CONSECUTIVE_MODAL_FAILURES", "20"))
+
+
+def generate_product_hash(title, price, image_url):
+    """Generate a unique hash for a product based on its core attributes for change detection."""
+    clean_title = str(title).strip().lower()
+    clean_image = str(image_url).strip()
+    
+    try:
+        price_float = float(price)
+        if price_float.is_integer():
+            clean_price = str(int(price_float))
+        else:
+            clean_price = f"{price_float:.2f}"
+    except (ValueError, TypeError):
+        clean_price = str(price).strip()
+
+    raw_string = f"{clean_title}_{clean_price}_{clean_image}".encode('utf-8')
+    return hashlib.md5(raw_string).hexdigest()
 
 
 def average_embeddings(image_embedding, text_embedding):
@@ -97,9 +116,13 @@ def insert_products_to_db(json_file_path):
                 product = products[idx]
                 title = (product.get('title') or '').strip()
                 image_url = product.get('images', [''])[0]
+                price = product.get('price', 0)
+                
                 if not image_url or not title:
                     _set_checkpoint(json_file_path, idx + 1)
                     continue
+
+                product_hash = generate_product_hash(title, price, image_url)
 
                 # 1. Download image bytes
                 img_response = requests.get(image_url, timeout=10)
@@ -127,18 +150,19 @@ def insert_products_to_db(json_file_path):
                 cur.execute(
                     """
                     INSERT INTO public.products 
-                    (name, price, vendor, category, product_url, image_url, img_emb, txt_emb)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    (name, price, vendor, category, product_url, image_url, img_emb, txt_emb, data_hash)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         title,
-                        float(product.get('price', 0)),
+                        float(price),
                         product.get('vendor'),
                         'Clothes',
                         product.get('url'),
-                        product.get('images', [''])[0],  # First image
+                        image_url,  # First image
                         image_embedding,  # Use the actual image embedding
-                        text_embedding   # Use the actual text embedding
+                        text_embedding,   # Use the actual text embedding
+                        product_hash
                     )
                 )
                 conn.commit()

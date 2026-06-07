@@ -1,0 +1,14 @@
+# Core runtime
+scrapy>=2.13          # 2.13 introduced the async start() seed method this project uses
+itemadapter>=0.7
+w3lib>=2.1
+simplejson>=3.19      # serialize Decimal money as a true JSON number, no float
+tldextract>=3.4       # registrable domain for allowed_domains (ships with Scrapy)
+
+# Development and testing
+pytest>=7.4
+
+# Optional, enable only if you activate the matching feature:
+# scrapy-playwright>=0.0.34   # browser automation fallback (last resort)
+# psycopg2-binary>=2.9        # direct PostgreSQL ingestion (PostgresExporter)
+# python-dotenv>=1.0          # load DB credentials from a .env file
