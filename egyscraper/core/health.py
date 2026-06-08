@@ -122,7 +122,7 @@ class CrawlHealthExtension:
             slug = getattr(spider, "store_slug", None) or spider.name
             report = build_report(stats, slug)
             spider.logger.info(format_report(report))
-            path = os.path.join(self.output_dir, slug, "crawl_report.json")
+            path = os.path.join(self.output_dir, "..", "logs", f"{slug}_crawl_report.json")
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(report, fh, indent=2, default=str)

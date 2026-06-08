@@ -2,12 +2,15 @@ import subprocess
 import sys
 from urllib.parse import urlparse
 from pathlib import Path
-from load_products import insert_all_products
+
+# Output goes to the repo-wide Products folder, not Shopify/products.
+# Path is computed relative to this file so it works regardless of CWD.
+PRODUCTS_DIR = Path(__file__).resolve().parent.parent / "Products"
 
 with open("base_urls.txt", "r", encoding="utf-8") as f:
     sites = [line.strip() for line in f if line.strip()]
 
-Path("products").mkdir(exist_ok=True)
+PRODUCTS_DIR.mkdir(exist_ok=True)
 
 
 for base_url in sites:
@@ -22,13 +25,13 @@ for base_url in sites:
     netloc = urlparse(base_url).netloc
     parts = netloc.split(".")
 
-    if parts[0] == "shop" or parts[0] == "www":  
+    if parts[0] == "shop" or parts[0] == "www":
         domain = parts[1]
     else:
         domain = parts[0]
-    
-    collections_file = f"collections.txt"
-    output_file = f"products/{domain}_products.json"
+
+    collections_file = "collections.txt"
+    output_file = str(PRODUCTS_DIR / f"{domain}_products.json")
 
     # 2. Scrape products
     subprocess.run(
@@ -44,8 +47,4 @@ for base_url in sites:
         check=True
     )
 
-print("\nAll sites processed successfully")
-
-# Load products to database
-print("\nLoading products to database...")
-insert_all_products()
+print(f"\nAll sites scraped. JSON files written to: {PRODUCTS_DIR}")

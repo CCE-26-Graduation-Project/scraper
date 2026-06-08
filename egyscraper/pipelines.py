@@ -252,17 +252,17 @@ class ExportPipeline(_CrawlerAware):
     def open_spider(self, spider=None):
         spider = spider or self._spider()
         settings = self.crawler.settings
-        out_dir = settings.get("OUTPUT_DIR", "data")
+        out_dir = settings.get("OUTPUT_DIR", "Products")
         slug = getattr(spider, "store_slug", None) or getattr(spider, "name", "spider")
-        base = f"{out_dir}/{slug}"
+        self._slug = slug
         build_array = settings.getbool("EXPORT_JSON_ARRAY", True)
         self.exporter = JsonLinesExporter(
-            jsonl_path=f"{base}/products.jsonl",
-            json_array_path=f"{base}/products.json" if build_array else None,
+            jsonl_path=f"{out_dir}/{slug}_products.jsonl",
+            json_array_path=f"{out_dir}/{slug}_products.json" if build_array else None,
             flush_every=settings.getint("EXPORT_FLUSH_EVERY", 200),
         )
         self.exporter.open()
-        logger.info("Exporting to %s/products.jsonl", base)
+        logger.info("Exporting to %s/%s_products.json", out_dir, slug)
 
     def process_item(self, item, spider=None):
         self.exporter.write(ordered(_as_dict(item)))
@@ -273,7 +273,14 @@ class ExportPipeline(_CrawlerAware):
             return
         try:
             self.exporter.close()
-            logger.info("Exported %d records to %s", self.exporter.count, self.exporter.jsonl_path)
+            final = self.exporter.json_array_path or self.exporter.jsonl_path
+            logger.info("Exported %d records to %s", self.exporter.count, final)
+            # Remove intermediate JSONL once the JSON array has been built.
+            if self.exporter.json_array_path:
+                try:
+                    os.remove(self.exporter.jsonl_path)
+                except OSError:
+                    pass
         except OSError as exc:
             # The data is intact in the .tmp file; surface a clear, actionable
             # message at WARNING so it is visible at the default log level.

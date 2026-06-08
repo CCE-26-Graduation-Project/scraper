@@ -114,7 +114,7 @@ ITEM_PIPELINES = {
 }
 
 # Where ExportPipeline writes per store output.
-OUTPUT_DIR = os.getenv("OUTPUT_DIR", "data")
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", "Products")
 
 # Export tuning. The JSONL stream is canonical; the JSON array is convenient for
 # small catalogs but can be turned off for very large ones. Flushing is batched
