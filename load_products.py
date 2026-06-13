@@ -315,22 +315,33 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
 def insert_all_products():
     """Process all JSON files in the repo-wide Products directory."""
     products_dir = Path(__file__).resolve().parent / "Products"
-    
+
     if not products_dir.exists():
         print("No products directory found")
         return
-    
-    json_files = list(products_dir.glob("*.json"))
-    
+
+    json_files = sorted(products_dir.glob("*.json"))
+
     if not json_files:
         print("No JSON files found in products directory")
         return
-    
+
+    # Determine which file to resume from so we can skip preceding files entirely.
+    checkpoints = _load_checkpoints()
+    checkpoint_filename = next(iter(checkpoints)) if checkpoints else None
+    reached_checkpoint = checkpoint_filename is None  # True means no skipping needed
+
     print(f"\nInserting {len(json_files)} product files into database...")
 
-
-    
     for json_file in json_files:
+        if not reached_checkpoint:
+            if json_file.name == checkpoint_filename:
+                reached_checkpoint = True
+                # Fall through — insert_products_to_db will resume from saved index.
+            else:
+                print(f"Skipping {json_file.name} (before checkpoint)...")
+                continue
+
         print(f"\nProcessing {json_file.name}...")
         stopped = insert_products_to_db(json_file)
         if stopped:

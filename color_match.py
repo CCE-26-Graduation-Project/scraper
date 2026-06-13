@@ -52,35 +52,35 @@ def _embed_image(image: Image.Image) -> list:
     return resp.json()["embedding"]
 
 
-def match_colours_to_images(
+def match_colors_to_images(
     title: str,
-    colours: list[str],
+    colors: list[str],
     image_urls: list[str],
 ) -> dict[str, list[tuple[str, list]]]:
-    """Match each image URL to its closest colour using background-removed embeddings.
+    """Match each image URL to its closest color using background-removed embeddings.
 
     1. Background is stripped from each image via rembg.
     2. The cleaned image is embedded via /embed-image.
-    3. Each colour is embedded as "a {colour} {title}" via /embed-text.
-    4. Cosine similarity assigns every image to its nearest colour.
+    3. Each color is embedded as "a {color} {title}" via /embed-text.
+    4. Cosine similarity assigns every image to its nearest color.
 
     Args:
-        title:      Product title used in colour prompts.
-        colours:    List of colour strings (e.g. ["Black", "White", "Navy"]).
+        title:      Product title used in color prompts.
+        colors:     List of color strings (e.g. ["Black", "White", "Navy"]).
         image_urls: List of image URLs to assign.
 
     Returns:
-        Dict mapping each colour to a list of (image_url, embedding) tuples.
+        Dict mapping each color to a list of (image_url, embedding) tuples.
     """
-    if not colours:
-        raise ValueError("colours list must not be empty")
+    if not colors:
+        raise ValueError("colors list must not be empty")
 
-    colour_embeddings = {}
-    for colour in colours:
-        print(f"  Embedding colour: {colour!r}")
-        colour_embeddings[colour] = _embed_text(f"a {colour} {title}")
+    color_embeddings = {}
+    for color in colors:
+        print(f"  Embedding color: {color!r}")
+        color_embeddings[color] = _embed_text(f"a {color} {title}")
 
-    result = {colour: [] for colour in colours}
+    result = {color: [] for color in colors}
     for image_url in image_urls:
         print(f"  Processing: {image_url.split('/files/')[-1].split('?')[0]}")
         img_dl = requests.get(image_url, timeout=10)
@@ -92,7 +92,7 @@ def match_colours_to_images(
         cleaned = _remove_background(image)
         embedding = _embed_image(cleaned)
 
-        best = max(colours, key=lambda c: _cosine_similarity(embedding, colour_embeddings[c]))
+        best = max(colors, key=lambda c: _cosine_similarity(embedding, color_embeddings[c]))
         result[best].append((image_url, embedding))
 
     return result
