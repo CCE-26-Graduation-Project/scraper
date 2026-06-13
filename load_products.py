@@ -130,11 +130,17 @@ def _clear_checkpoint(json_file_path):
         _save_checkpoints(checkpoints)
 
 
-def insert_products_to_db(json_file_path, products=None):
+def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None):
     """Insert products into public.products.
 
     If ``products`` is given it is used directly; otherwise the full JSON file
     is read.  Passing a pre-filtered list is how the delta-load path works.
+
+    ``allowed_color_ids`` is an optional set of composite ``"url||color"``
+    strings.  When provided only those specific (product_url, color) pairs are
+    embedded and inserted; the image download is skipped entirely for products
+    that have no matching colors.  Pass ``None`` (default) to process every
+    color as usual.
     """
 
     if not AZURE_API_URL:
@@ -170,6 +176,12 @@ def insert_products_to_db(json_file_path, products=None):
                 price = product.get('price', 0)
                 product_url = product.get('product_url')
                 colors = product.get('colors') or ['']
+
+                if allowed_color_ids is not None:
+                    colors = [c for c in colors if f"{product_url}||{c or ''}" in allowed_color_ids]
+                    if not colors:
+                        _set_checkpoint(json_file_path, idx + 1)
+                        continue
 
                 if not image_url or not title:
                     _set_checkpoint(json_file_path, idx + 1)
