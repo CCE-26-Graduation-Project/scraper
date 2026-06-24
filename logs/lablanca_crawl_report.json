@@ -1,0 +1,17 @@
+{
+  "store": "lablanca",
+  "products_scraped": 423,
+  "requests_made": 3,
+  "retries": 0,
+  "failures": 0,
+  "dropped_items": 0,
+  "duration_seconds": 3.65,
+  "products_per_request": 141.0,
+  "finish_reason": "finished",
+  "scope_total_discovered": 431,
+  "scope_accepted": 423,
+  "scope_rejected": 8,
+  "scope_rejection_breakdown": {
+    "out_of_scope": 8
+  }
+}

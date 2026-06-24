@@ -1,0 +1,17 @@
+{
+  "store": "iravin",
+  "products_scraped": 2062,
+  "requests_made": 10,
+  "retries": 0,
+  "failures": 0,
+  "dropped_items": 2,
+  "duration_seconds": 11.62,
+  "products_per_request": 206.2,
+  "finish_reason": "finished",
+  "scope_total_discovered": 2072,
+  "scope_accepted": 2064,
+  "scope_rejected": 8,
+  "scope_rejection_breakdown": {
+    "accessory": 8
+  }
+}

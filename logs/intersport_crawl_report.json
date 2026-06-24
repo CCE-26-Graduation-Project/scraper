@@ -1,0 +1,20 @@
+{
+  "store": "intersport",
+  "products_scraped": 1883,
+  "requests_made": 12,
+  "retries": 0,
+  "failures": 0,
+  "dropped_items": 0,
+  "duration_seconds": 13.39,
+  "products_per_request": 156.917,
+  "finish_reason": "finished",
+  "scope_total_discovered": 2507,
+  "scope_accepted": 1883,
+  "scope_rejected": 624,
+  "scope_rejection_breakdown": {
+    "accessory": 250,
+    "sports_equipment": 203,
+    "out_of_scope": 158,
+    "home_goods": 13
+  }
+}

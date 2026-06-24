@@ -158,6 +158,7 @@ def _map_product_group(
     prices: List = []
     any_in_stock = False
     colors_raw: List[str] = []
+    color_images: Dict[str, List[str]] = {}
 
     for index, vnode in enumerate(variant_nodes):
         offers = _offer_list(vnode.get("offers"))
@@ -172,7 +173,14 @@ def _map_product_group(
             prices.append(pinfo["price"])
         if v_color:
             colors_raw.append(v_color)
-        for img in _images(vnode.get("image")):
+        variant_imgs = _images(vnode.get("image"))
+        if v_color and variant_imgs:
+            color_key = str(v_color).strip()
+            bucket = color_images.setdefault(color_key, [])
+            for img in variant_imgs:
+                if img not in bucket:
+                    bucket.append(img)
+        for img in variant_imgs:
             if img not in images:
                 images.append(img)
 
@@ -188,6 +196,12 @@ def _map_product_group(
             "available": (avail == "in_stock") if avail else None,
         })
         variants.append(v)
+
+    # Colours that got no variant-level images fall back to product-level images.
+    product_imgs = _images(node.get("image"))
+    for color_key in color_images:
+        if not color_images[color_key]:
+            color_images[color_key] = list(product_imgs)
 
     resolved_currency = currency
     for vnode in variant_nodes:
@@ -220,6 +234,7 @@ def _map_product_group(
         "product_url": product_url,
         "material": normalize.extract_materials(description, title),
         "colors": normalize.normalize_colors(colors_raw),
+        "color_images": color_images,
         "sizes": [],  # this ProductGroup varies by colour only; no size evidence
         "variants": variants,
         "attributes": {
@@ -265,8 +280,12 @@ def map_jsonld_product(
     price_info = _price_and_currency(offers_list)
     resolved_currency = normalize.normalize_currency(price_info["currency"], currency)
 
+    raw_color_val = node.get("color")
     colors = normalize.normalize_colors(
-        node.get("color") if isinstance(node.get("color"), list) else [node.get("color")]
+        raw_color_val if isinstance(raw_color_val, list) else [raw_color_val]
+    )
+    color_images: Dict[str, List[str]] = (
+        {colors[0]: list(images)} if len(colors) == 1 and images else {}
     )
     materials = normalize.extract_materials(
         " ".join(str(node.get(k, "")) for k in ("material",)), description, title
@@ -365,6 +384,7 @@ def map_jsonld_product(
             "product_url": product_url,
             "material": materials,
             "colors": colors,
+            "color_images": color_images,
             "sizes": sizes,
             "variants": variants,
             "attributes": attrs,

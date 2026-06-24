@@ -172,7 +172,7 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
                 product = products[idx]
                 title = (product.get('title') or '').strip()
                 images = product.get('image_urls') or []
-                image_url = images[0] if images else ''
+                color_images_map = product.get('color_images') or {}
                 price = product.get('price', 0)
                 product_url = product.get('product_url')
                 colors = product.get('colors') or ['']
@@ -183,35 +183,53 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
                         _set_checkpoint(json_file_path, idx + 1)
                         continue
 
-                if not image_url or not title:
+                if not title:
                     _set_checkpoint(json_file_path, idx + 1)
                     continue
 
-                # Download image bytes once — shared across all color variants.
-                img_dl = requests.get(image_url, timeout=10)
-                if img_dl.status_code != 200:
-                    raise Exception(f"Failed to download image: {image_url}")
+                print(f"Generating embeddings for: {title}...")
 
-                # Get image embedding once per product.
-                print(f"Generating embedding for: {title}...")
-                try:
-                    img_emb_resp = requests.post(
-                        f"{AZURE_API_URL}/embed-image",
-                        files={"file": ("image", img_dl.content, "image/jpeg")},
-                        timeout=30
-                    )
-                    img_emb_resp.raise_for_status()
-                    image_embedding = img_emb_resp.json()["embedding"]
-                    consecutive_modal_failures = 0
-                except Exception as azure_error:
-                    consecutive_modal_failures += 1
-                    raise RuntimeError(
-                        f"Azure image embedding call failed ({consecutive_modal_failures}/{MAX_CONSECUTIVE_MODAL_FAILURES}): {azure_error}"
-                    )
-
-                # Insert one row per color.
+                # Insert one row per color, using the color-specific image where available.
                 for color in colors:
+                    color_img_list = (color_images_map.get(color) or []) if color else []
+                    image_url = color_img_list[0] if color_img_list else (images[0] if images else '')
+
+                    if not image_url:
+                        print(f"  Skipping color '{color}' — no image available")
+                        continue
+
                     product_hash = generate_product_hash(title, price, image_url, color or None)
+
+                    try:
+                        img_dl = requests.get(image_url, timeout=10)
+                        if img_dl.status_code != 200:
+                            print(f"  Failed to download image for color '{color}': {image_url}")
+                            continue
+                    except Exception as dl_err:
+                        print(f"  Image download failed for color '{color}': {dl_err}")
+                        continue
+
+                    try:
+                        img_emb_resp = requests.post(
+                            f"{AZURE_API_URL}/embed-image",
+                            files={"file": ("image", img_dl.content, "image/jpeg")},
+                            timeout=30
+                        )
+                        img_emb_resp.raise_for_status()
+                        image_embedding = img_emb_resp.json()["embedding"]
+                        consecutive_modal_failures = 0
+                    except Exception as azure_error:
+                        consecutive_modal_failures += 1
+                        print(
+                            f"  Azure image embedding failed for color '{color}' of '{title}': {azure_error} "
+                            f"({consecutive_modal_failures}/{MAX_CONSECUTIVE_MODAL_FAILURES})"
+                        )
+                        if consecutive_modal_failures >= MAX_CONSECUTIVE_MODAL_FAILURES:
+                            raise RuntimeError(
+                                f"Max consecutive Modal failures ({consecutive_modal_failures}) reached"
+                            ) from azure_error
+                        continue
+
                     text = f"{color} {title}".strip() if color else title
                     try:
                         txt_resp = requests.post(

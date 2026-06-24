@@ -47,6 +47,96 @@ def _looks_like_gtin(barcode: Optional[str]) -> bool:
     return bool(barcode) and str(barcode).isdigit() and len(str(barcode)) in (8, 12, 13, 14)
 
 
+def _build_color_images(
+    product: Dict[str, Any], option_names: List[str]
+) -> Dict[str, List[str]]:
+    """Build a colour → image-url list map from Shopify's native image/variant links.
+
+    Uses image.variant_ids as the source of truth (every image knows which
+    variants it belongs to). variant.featured_image is used only to place the
+    primary image first for each colour. Images with an empty variant_ids list
+    are unlinked (shared/lifestyle shots) and become the fallback for any colour
+    that would otherwise get zero images.
+    """
+    color_option_pos: Optional[int] = None
+    for i, name in enumerate(option_names):
+        if name in ("color", "colour", "اللون", "لون"):
+            color_option_pos = i
+            break
+    if color_option_pos is None:
+        return {}
+
+    # variant_id → color
+    variant_color: Dict[int, str] = {}
+    for raw in (product.get("variants") or []):
+        vid = raw.get("id")
+        val = raw.get(f"option{color_option_pos + 1}")
+        if vid is not None and val:
+            variant_color[vid] = str(val).strip()
+
+    if not variant_color:
+        return {}
+
+    # color → first featured image src (from variant.featured_image)
+    color_featured: Dict[str, str] = {}
+    for raw in (product.get("variants") or []):
+        vid = raw.get("id")
+        color = variant_color.get(vid)
+        if not color or color in color_featured:
+            continue
+        fi = raw.get("featured_image")
+        if isinstance(fi, dict) and fi.get("src"):
+            color_featured[color] = fi["src"]
+
+    # Initialise a bucket per colour so every colour is represented.
+    color_images: Dict[str, List[str]] = {c: [] for c in set(variant_color.values())}
+    unlinked: List[str] = []
+
+    for img in (product.get("images") or []):
+        if not isinstance(img, dict):
+            continue
+        src = img.get("src")
+        if not src:
+            continue
+        vids: List[int] = img.get("variant_ids") or []
+        if not vids:
+            unlinked.append(src)
+            continue
+        seen_colors: set = set()
+        for vid in vids:
+            color = variant_color.get(vid)
+            if color and color not in seen_colors:
+                color_images[color].append(src)
+                seen_colors.add(color)
+
+    # Put the featured image first for each colour.
+    for color, imgs in color_images.items():
+        featured = color_featured.get(color)
+        if featured and featured in imgs and imgs[0] != featured:
+            imgs.remove(featured)
+            imgs.insert(0, featured)
+
+    # Append unlinked (shared/lifestyle) images to every colour so no colour
+    # is left without the full set of product shots.
+    for color, imgs in color_images.items():
+        for src in unlinked:
+            if src not in imgs:
+                imgs.append(src)
+
+    # Normalize colour keys to canonical names and merge any that collapse to
+    # the same canonical (e.g. "Grey" and "Gray" → "Gray").
+    normalized: Dict[str, List[str]] = {}
+    for raw_color, imgs in color_images.items():
+        key = normalize.normalize_color(raw_color)
+        if key not in normalized:
+            normalized[key] = []
+        for src in imgs:
+            if src not in normalized[key]:
+                normalized[key].append(src)
+
+    return normalized
+
+
 def _build_variants(product: Dict[str, Any], pid: str) -> List[Dict[str, Any]]:
     """Build the full variant list, preserving per variant data."""
     option_names = _option_names(product)
@@ -132,6 +222,7 @@ def map_shopify_product(
     description = _clean_text(product.get("body_html"))
     tag_text = " ".join(tags)
 
+    option_names = _option_names(product)
     variants = _build_variants(product, pid)
 
     # Roll ups derived from variants (never a collapse: variants are kept).
@@ -150,6 +241,7 @@ def map_shopify_product(
     )
 
     colors = normalize.normalize_colors(v.get("color") for v in variants)
+    color_images = _build_color_images(product, option_names)
     sizes = normalize.clean_list(v.get("size") for v in variants)
 
     product_barcode = _rollup_identifier(variants, "barcode")
@@ -182,6 +274,7 @@ def map_shopify_product(
             "product_url": url,
             "material": normalize.extract_materials(tag_text, description, title),
             "colors": colors,
+            "color_images": color_images,
             "sizes": sizes,
             "variants": variants,
             "attributes": {

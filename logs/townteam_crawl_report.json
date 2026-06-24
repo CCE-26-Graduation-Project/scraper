@@ -1,0 +1,18 @@
+{
+  "store": "townteam",
+  "products_scraped": 2738,
+  "requests_made": 13,
+  "retries": 0,
+  "failures": 0,
+  "dropped_items": 0,
+  "duration_seconds": 17.42,
+  "products_per_request": 210.615,
+  "finish_reason": "finished",
+  "scope_total_discovered": 2779,
+  "scope_accepted": 2738,
+  "scope_rejected": 41,
+  "scope_rejection_breakdown": {
+    "accessory": 32,
+    "out_of_scope": 9
+  }
+}

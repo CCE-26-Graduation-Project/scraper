@@ -1,0 +1,17 @@
+{
+  "store": "basiclook",
+  "products_scraped": 78,
+  "requests_made": 3,
+  "retries": 0,
+  "failures": 0,
+  "dropped_items": 0,
+  "duration_seconds": 2.64,
+  "products_per_request": 26.0,
+  "finish_reason": "finished",
+  "scope_total_discovered": 81,
+  "scope_accepted": 78,
+  "scope_rejected": 3,
+  "scope_rejection_breakdown": {
+    "out_of_scope": 3
+  }
+}
