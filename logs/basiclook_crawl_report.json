@@ -1,15 +1,15 @@
 {
   "store": "basiclook",
-  "products_scraped": 78,
+  "products_scraped": 81,
   "requests_made": 3,
   "retries": 0,
   "failures": 0,
   "dropped_items": 0,
-  "duration_seconds": 2.64,
-  "products_per_request": 26.0,
+  "duration_seconds": 2.57,
+  "products_per_request": 27.0,
   "finish_reason": "finished",
-  "scope_total_discovered": 81,
-  "scope_accepted": 78,
+  "scope_total_discovered": 84,
+  "scope_accepted": 81,
   "scope_rejected": 3,
   "scope_rejection_breakdown": {
     "out_of_scope": 3

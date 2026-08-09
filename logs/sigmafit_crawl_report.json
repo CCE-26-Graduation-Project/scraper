@@ -1,18 +1,18 @@
 {
   "store": "sigmafit",
-  "products_scraped": 229,
-  "requests_made": 2,
+  "products_scraped": 257,
+  "requests_made": 3,
   "retries": 0,
   "failures": 0,
   "dropped_items": 0,
-  "duration_seconds": 1.82,
-  "products_per_request": 114.5,
+  "duration_seconds": 2.16,
+  "products_per_request": 85.667,
   "finish_reason": "finished",
-  "scope_total_discovered": 235,
-  "scope_accepted": 229,
+  "scope_total_discovered": 263,
+  "scope_accepted": 257,
   "scope_rejected": 6,
   "scope_rejection_breakdown": {
-    "out_of_scope": 4,
-    "accessory": 2
+    "accessory": 3,
+    "out_of_scope": 3
   }
 }

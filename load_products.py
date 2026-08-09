@@ -159,7 +159,8 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
     consecutive_modal_failures = 0
     stop_due_to_modal_failures = False
     checkpoint_key = str(Path(json_file_path).name)
-    vendor = Path(json_file_path).stem.replace('_products', '').replace('_', ' ').title()
+    # Fallback vendor when a product record has no brand of its own.
+    default_vendor = Path(json_file_path).stem.replace('_products', '').replace('_', ' ').title()
     start_index = int(_load_checkpoints().get(checkpoint_key, 0))
 
     if start_index > 0:
@@ -176,6 +177,11 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
                 price = product.get('price', 0)
                 product_url = product.get('product_url')
                 colors = product.get('colors') or ['']
+                # Use the scraper's own brand/category when present; only
+                # fall back to filename-derived vendor or the generic
+                # 'Clothes' label when a record genuinely has neither.
+                vendor = (product.get('brand') or product.get('vendor') or '').strip() or default_vendor
+                category = (product.get('category') or '').strip() or 'Clothes'
 
                 if allowed_color_ids is not None:
                     colors = [c for c in colors if f"{product_url}||{c or ''}" in allowed_color_ids]
@@ -265,7 +271,7 @@ def insert_products_to_db(json_file_path, products=None, allowed_color_ids=None)
                                 title,
                                 float(price),
                                 vendor,
-                                'Clothes',
+                                category,
                                 product_url,
                                 image_url,
                                 color or None,

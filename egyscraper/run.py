@@ -28,6 +28,14 @@ from typing import Dict, List, Optional
 
 from .stores.shopify_stores import SHOPIFY_STORES, all_slugs, confirmed_slugs
 
+# Windows consoles default stdout/stderr to the system codepage (cp1252),
+# which cannot encode the arrow/box-drawing characters this module prints.
+# Force UTF-8 so `python -m egyscraper.run` works without an external
+# PYTHONIOENCODING=utf-8 override.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8")
+
 
 # ── single store ─────────────────────────────────────────────────────────────
 

@@ -1,18 +1,18 @@
 {
   "store": "townteam",
-  "products_scraped": 2738,
-  "requests_made": 13,
+  "products_scraped": 2650,
+  "requests_made": 12,
   "retries": 0,
   "failures": 0,
   "dropped_items": 0,
-  "duration_seconds": 17.42,
-  "products_per_request": 210.615,
+  "duration_seconds": 39.84,
+  "products_per_request": 220.833,
   "finish_reason": "finished",
-  "scope_total_discovered": 2779,
-  "scope_accepted": 2738,
-  "scope_rejected": 41,
+  "scope_total_discovered": 2692,
+  "scope_accepted": 2650,
+  "scope_rejected": 42,
   "scope_rejection_breakdown": {
-    "accessory": 32,
-    "out_of_scope": 9
+    "accessory": 41,
+    "out_of_scope": 1
   }
 }

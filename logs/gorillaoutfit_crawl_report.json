@@ -1,18 +1,18 @@
 {
   "store": "gorillaoutfit",
-  "products_scraped": 294,
+  "products_scraped": 303,
   "requests_made": 3,
   "retries": 0,
   "failures": 0,
   "dropped_items": 0,
-  "duration_seconds": 2.28,
-  "products_per_request": 98.0,
+  "duration_seconds": 7.6,
+  "products_per_request": 101.0,
   "finish_reason": "finished",
-  "scope_total_discovered": 322,
-  "scope_accepted": 294,
-  "scope_rejected": 28,
+  "scope_total_discovered": 333,
+  "scope_accepted": 303,
+  "scope_rejected": 30,
   "scope_rejection_breakdown": {
-    "out_of_scope": 27,
+    "out_of_scope": 29,
     "accessory": 1
   }
 }

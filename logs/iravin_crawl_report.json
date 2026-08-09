@@ -1,17 +1,15 @@
 {
   "store": "iravin",
-  "products_scraped": 2062,
+  "products_scraped": 2170,
   "requests_made": 10,
   "retries": 0,
   "failures": 0,
-  "dropped_items": 2,
-  "duration_seconds": 11.62,
-  "products_per_request": 206.2,
+  "dropped_items": 3,
+  "duration_seconds": 32.19,
+  "products_per_request": 217.0,
   "finish_reason": "finished",
-  "scope_total_discovered": 2072,
-  "scope_accepted": 2064,
-  "scope_rejected": 8,
-  "scope_rejection_breakdown": {
-    "accessory": 8
-  }
+  "scope_total_discovered": 2173,
+  "scope_accepted": 2173,
+  "scope_rejected": 0,
+  "scope_rejection_breakdown": {}
 }
